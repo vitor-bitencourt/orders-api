@@ -67,6 +67,27 @@ app.get('/order/:orderId', async (req, res) => {
   }
 });
 
+// Update order by order number
+app.put('/order/:orderId', async (req, res) => {
+  try {
+    const updatedOrder = await Order.findOneAndUpdate(req.params, {
+      value: req.body.valorTotal,
+      creationDate: new Date(req.body.dataCriacao),
+      items: req.body.items.map(item => ({
+        productId: item.idItem,
+        quantity: item.quantidadeItem,
+        price: item.valorItem
+      }))
+    }, { new: true });
+    if (!updatedOrder) {
+      return res.status(404).send({ error: 'Order not found' });
+    }
+    res.send(updatedOrder);
+  } catch (err) {
+    res.status(400).send(err);
+  }
+});
+
 // Delete order by order number
 app.delete('/order/:orderId', async (req, res) => { 
   const order = await Order.findOneAndDelete(req.params);

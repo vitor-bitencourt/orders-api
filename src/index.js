@@ -20,6 +20,31 @@ const Order = mongoose.model('Order', {
   }]
 });
 
+//Create a new order
+app.post('/order', async (req, res) => {
+  try {
+    const { numeroPedido, valorTotal, dataCriacao, items } = req.body;
+
+    // Transform data
+    const order = new Order({
+      orderId: numeroPedido.replace(/-\d+$/, ''),
+      value: valorTotal,
+      creationDate: new Date(dataCriacao),
+      items: items.map(item => ({
+        productId: item.idItem,
+        quantity: item.quantidadeItem,
+        price: item.valorItem
+      }))
+    });
+
+    await order.save();
+    res.status(201).send(order);
+  } catch (err) {
+    res.status(400).send(err);
+  }
+});
+
+
 app.listen(port, () => {
   mongoose.connect(process.env.MONGODB_URI, {
   }).then(() => {

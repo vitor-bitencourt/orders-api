@@ -44,6 +44,16 @@ app.post('/order', async (req, res) => {
   }
 });
 
+// List all orders
+app.get('/order/list', async (req, res) => {
+  try {
+    const orders = await Order.find();
+    res.send(orders);
+  } catch (err) {
+    res.status(500).send(err);
+  }
+});
+
 // Get order by order number
 app.get('/order/:orderId', async (req, res) => { 
   try {

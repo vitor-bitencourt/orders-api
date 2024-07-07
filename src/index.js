@@ -23,9 +23,26 @@ const Order = mongoose.model('Order', {
 //Create a new order
 app.post('/order', async (req, res) => {
   try {
+    //Verify if the body of the request is empty
+    if (!req.body || Object.keys(req.body).length === 0) {
+      throw new Error('Não foi possível criar o pedido, verifique os dados informados.');
+    }
+
     const { numeroPedido, valorTotal, dataCriacao, items } = req.body;
 
-    // Transform data
+    //Verify if the required fields are empty
+    if (!numeroPedido || !valorTotal || !dataCriacao || !items || !Array.isArray(items)) {
+      throw new Error('Não foi possível criar o pedido, verifique os dados informados.');
+    }
+
+    //Verify if each item has the required fields
+    for (const item of items) {
+      if (!item.idItem || !item.quantidadeItem || !item.valorItem) {
+        throw new Error('Não foi possível criar o pedido, verifique os dados dos itens informados.');
+      }
+    }
+
+    //Transform the data
     const order = new Order({
       orderId: numeroPedido.replace(/-\d+$/, ''),
       value: valorTotal,
@@ -40,7 +57,8 @@ app.post('/order', async (req, res) => {
     await order.save();
     res.status(201).send(order);
   } catch (err) {
-    res.status(400).send(err);
+    console.error('Error creating the order:', err);
+    res.status(400).send({ error: err.message });
   }
 });
 
@@ -48,9 +66,14 @@ app.post('/order', async (req, res) => {
 app.get('/order/list', async (req, res) => {
   try {
     const orders = await Order.find();
+    //Verify if there is any order
+    if (orders.length === 0) {
+      return res.status(404).send({ message: 'Nenhum pedido encontrado' });
+    }
     res.send(orders);
   } catch (err) {
-    res.status(500).send(err);
+    console.error('Error ao buscar pedidos:', err);
+    res.status(500).send({ error: 'Erro ao buscar os pedidos' });
   }
 });
 
@@ -90,10 +113,27 @@ app.put('/order/:orderId', async (req, res) => {
 
 // Delete order by order number
 app.delete('/order/:orderId', async (req, res) => { 
-  const order = await Order.findOneAndDelete(req.params);
-  return res.send(order);
+  try {
+    const orderId = req.params.orderId;
+    //Verify if there is and ordeId and it is not empty
+    if (!orderId) {
+      return res.status(400).send({ error: 'Número do pedido não encontrado!' });
+    }
+    //Try to  find and delete the order
+    const order = await Order.findOneAndDelete({ orderId });
+
+    //verify if the order was found
+    if (!order) {
+      return res.status(404).send({ error: 'Pedido não encontrado!' });
+    }
+    return res.send(order);
+  } catch (err) {
+    console.error('Error deleting the order:', err);
+    return res.status(500).send({ error: 'Erro ao deletar o pedido' });
+  }
 });
 
+// DB Conncection
 app.listen(port, () => {
   mongoose.connect(process.env.MONGODB_URI, {
   }).then(() => {

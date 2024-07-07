@@ -57,6 +57,12 @@ app.get('/order/:orderId', async (req, res) => {
   }
 });
 
+// Delete order by order number
+app.delete('/order/:orderId', async (req, res) => { 
+  const order = await Order.findOneAndDelete(req.params);
+  return res.send(order);
+});
+
 app.listen(port, () => {
   mongoose.connect(process.env.MONGODB_URI, {
   }).then(() => {

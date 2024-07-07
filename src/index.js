@@ -44,6 +44,18 @@ app.post('/order', async (req, res) => {
   }
 });
 
+// Get order by order number
+app.get('/order/:orderId', async (req, res) => { 
+  try {
+    const order = await Order.find(req.params);
+    if (!order) {
+        return res.status(404).send({ error: 'Order not found' });
+      }
+      res.send(order);
+  } catch (err) {
+    res.status(500).send(err);
+  }
+});
 
 app.listen(port, () => {
   mongoose.connect(process.env.MONGODB_URI, {
